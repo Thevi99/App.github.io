@@ -4,4 +4,4 @@ numpy
 Pillow
 gunicorn
 flask_cors
-gdown
+requests
