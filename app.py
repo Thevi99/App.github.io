@@ -1,4 +1,5 @@
 import os
+import requests
 import numpy as np
 import tensorflow as tf
 from flask import Flask, request, render_template, jsonify
@@ -8,15 +9,30 @@ import io
 import base64
 
 app = Flask(__name__)
-CORS(app)  # เปิด CORS เพื่อให้ GitHub Pages เรียก API ได้
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# URL ไฟล์โมเดลบน GitHub LFS (แก้ไข URL ให้ตรงกับ Repo ของคุณ)
+model_url = "https://github.com/Thevi99/App.github.io/raw/main/sand_classification_model20-10.h5"
+model_path = "sand_classification_model20-10.h5"
+
+# โหลดโมเดลจาก GitHub LFS ถ้ายังไม่มี
+if not os.path.exists(model_path):
+    print("🚀 กำลังโหลดโมเดลจาก GitHub LFS...")
+    response = requests.get(model_url, stream=True)
+    if response.status_code == 200:
+        with open(model_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        print("✅ โหลดโมเดลสำเร็จ!")
+    else:
+        raise Exception(f"❌ โหลดโมเดลล้มเหลว! Status code: {response.status_code}")
 
 # โหลดโมเดล
-model = tf.keras.models.load_model("sand_classification_model20-10.h5")
+model = tf.keras.models.load_model(model_path)
 
 # หมวดหมู่
 categories = ["Class A", "Class B", "Class C", "Notsandimage"]
 
-# ฟังก์ชันเตรียมรูปภาพ
 def preprocess_image(image_file):
     img = Image.open(io.BytesIO(image_file.read())).convert("RGB")
     img = img.resize((765, 1020))
@@ -24,12 +40,10 @@ def preprocess_image(image_file):
     img_array = np.expand_dims(img_array, axis=0)
     return img_array, img
 
-# หน้าเว็บหลัก
 @app.route("/")
 def index():
     return render_template("index1.html")
 
-# Endpoint สำหรับพยากรณ์
 @app.route("/predict", methods=["POST"])
 def predict():
     if "image" not in request.files:
@@ -40,12 +54,10 @@ def predict():
         return jsonify({"error": "No selected file"}), 400
     
     try:
-        # ประมวลผลรูปภาพ
         img_array, original_img = preprocess_image(file)
         prediction = model.predict(img_array)
         predicted_class = categories[np.argmax(prediction)]
 
-        # แปลงภาพเป็น base64
         buffered = io.BytesIO()
         original_img.save(buffered, format="JPEG")
         img_str = base64.b64encode(buffered.getvalue()).decode()
@@ -62,4 +74,4 @@ def predict():
 # รันเซิร์ฟเวอร์บน Render
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port)
