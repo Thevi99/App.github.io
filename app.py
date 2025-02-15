@@ -9,7 +9,7 @@ import io
 import base64
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/predict": {"origins": "*"}})
 
 # URL ไฟล์โมเดลบน GitHub LFS (แก้ไขให้ตรงกับ Repo ของคุณ)
 model_url = "https://github.com/Thevi99/App.github.io/raw/main/sand_classification_model20-10.h5"
