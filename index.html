@@ -60,50 +60,54 @@
     <footer class="bg-gray-900 p-4 text-center text-gray-400 text-sm mt-auto">
         &copy; 2025 AI Raw Material Classification. From CPAC.
     </footer>
+
+    <!-- JavaScript -->
     <script>
         async function uploadImage(event, type) {
             const file = event.target.files[0];
             if (!file) return;
-        
-            // Show loading state
-            document.getElementById(`result-${type}`).innerHTML = `
-                <p class="text-gray-400">Processing image...</p>
-            `;
-        
-            const formData = new FormData();
-            formData.append('image', file); // ✅ เปลี่ยนจาก 'file' เป็น 'image'
 
-            const apiUrl = "https://app-github-io.onrender.com/predict"; // ✅ ใช้ URL แบบเต็ม
-        
+            // แสดงข้อความกำลังโหลด
+            document.getElementById(`result-${type}`).innerHTML = `
+                <p class="text-gray-400">⏳ Processing image...</p>
+            `;
+
+            const formData = new FormData();
+            formData.append('image', file); // ✅ ใช้ key 'image'
+
+            const apiUrl = "https://app-github-io.onrender.com/predict"; // ✅ URL แบบเต็ม
+
             try {
-                const response = await fetch(apiUrl, { 
-                    method: 'POST', 
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
                     body: formData,
                     headers: {
                         'Accept': 'application/json'
                     }
                 });
+
+                // แปลงผลลัพธ์เป็น JSON
                 const result = await response.json();
+
+                // แสดงผลลัพธ์
                 if (result.error) {
                     document.getElementById(`result-${type}`).innerHTML = `
-                        <p class="text-red-500">Error: ${result.error}</p>
+                        <p class="text-red-500">⚠️ Error: ${result.error}</p>
                     `;
-                    return;
+                } else {
+                    document.getElementById(`result-${type}`).innerHTML = `
+                        <img src="${result.image_data}" class="w-96 h-auto mt-4 border border-gray-500" alt="Predicted Image">
+                        <p class="text-xl mt-2 font-bold">Class: ${result.class}</p>
+                    `;
                 }
-        
-                // แสดงภาพผลลัพธ์และชื่อคลาส
-                document.getElementById(`result-${type}`).innerHTML = `
-                    <img src="${result.image_data}" class="w-96 h-auto mt-4 border border-gray-500">
-                    <p class="text-xl mt-2 font-bold">Class: ${result.class}</p>
-                `;
+
             } catch (error) {
                 console.error('❌ Error:', error);
                 document.getElementById(`result-${type}`).innerHTML = `
-                    <p class="text-red-500">⚠️ Error processing image</p>
+                    <p class="text-red-500">❌ Error processing image</p>
                 `;
             }
         }
     </script>
-    
 </body>
 </html>
